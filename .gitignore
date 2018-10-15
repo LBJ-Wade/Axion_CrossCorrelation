@@ -1,0 +1,7 @@
+*~
+*.pyc
+outputs/*
+test_plots/*
+.DS_Store
+import_files/power_spectrum.dat
+test_all.py
