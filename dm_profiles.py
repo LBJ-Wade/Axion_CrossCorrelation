@@ -197,6 +197,7 @@ class Halo_Functions(object):
                             bounds_error=False, fill_value='extrapolate')
         except:
             dn_dm_tab = self.dn_dm_tabular(self.Mmin, self.Mmax, z)
+            dn_dm_tab = dn_dm_tab[dn_dm_tab[:,1] > 0]
             dn_dm = interp1d(np.log10(dn_dm_tab[:,0]), np.log10(dn_dm_tab[:,1]), kind='linear',
                             bounds_error=False, fill_value='extrapolate')
         integ_val = quad(lambda M: 10.**dn_dm(np.log10(M))*(self.N_central(M) + self.N_sat(M)), self.Mmin, self.Mmax, epsrel=1e-4, limit=50)

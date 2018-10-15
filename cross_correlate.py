@@ -56,7 +56,7 @@ class Cross_Corr(object):
             findz = fsolve(lambda z: comoving_chi(z) - chi, 1)[0]
             ps = self.power_spectrum(findz, ell)
             integrand[i] = self.windows[0](findz)*self.windows[1](findz) / chi**2. * np.sum(ps)        
-        cl_val = self.normalize * np.trapz(integrand, self.chi_list)
+        cl_val = self.normalize() * np.trapz(integrand, self.chi_list)
 
         return comoving_integrate
 
