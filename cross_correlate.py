@@ -57,8 +57,7 @@ class Cross_Corr(object):
             ps = self.power_spectrum(findz, ell)
             integrand[i] = self.windows[0](findz)*self.windows[1](findz) / chi**2. * np.sum(ps)        
         cl_val = self.normalize() * np.trapz(integrand, self.chi_list)
-
-        return comoving_integrate
+        return cl_val
 
     def compute_angularPS(self):
         print 'Computing CLs'
