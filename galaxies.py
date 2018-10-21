@@ -37,23 +37,26 @@ class Galaxy_Survey(object):
         # Function of redshift
         return self.dn_dz(z) * hubble(z)
 
-    def mean_g(self, z):
-        dn_dm_tab = self.haloF.dn_dm_tabular(self.Mmin, self.Mmax, z)
+    def mean_g(self, z, dn_dm_tab=None):
+        if dn_dm_tab is None:
+            dn_dm_tab = self.haloF.dn_dm_tabular(self.Mmin, self.Mmax, z)
+            dn_dm_tab = dn_dm_tab[dn_dm_tab[:,1] > 0]
         meanGal = self.haloF.avg_n_gal(z, dn_dm_tab=dn_dm_tab)
-        dn_dm_tab = dn_dm_tab[dn_dm_tab[:,1] > 0]
         integ_val = np.trapz(dn_dm_tab[:,1] * dn_dm_tab[:,0] *
                             (self.haloF.N_central(dn_dm_tab[:,0]) + self.haloF.N_sat(dn_dm_tab[:,0])) / meanGal,
                             dn_dm_tab[:,0])
         return integ_val
 
-    def FT_gfunc(self, k, z, M):
+    def FT_gfunc(self, k, z, M, dn_dm_tab=None):
+        if dn_dm_tab is None:
+            dn_dm_tab = self.haloF.dn_dm_tabular(self.Mmin, self.Mmax, z)
+            dn_dm_tab = dn_dm_tab[dn_dm_tab[:,1] > 0]
         DM_p = NFW(M, z)
         FT_prof = DM_p.FT_density(k)
         meanN = self.haloF.N_central(M) + self.haloF.N_sat(M)
-        dn_dm_tab = self.haloF.dn_dm_tabular(self.Mmin, self.Mmax, z)
-        dn_dm_tab = dn_dm_tab[dn_dm_tab[:,1] > 0]
         meanGal = self.haloF.avg_n_gal(z, dn_dm_tab=dn_dm_tab)
-        meanG = self.mean_g(z)
+        meanG = self.mean_g(z, dn_dm_tab=dn_dm_tab)
+#        print meanN, meanGal, meanG, FT_prof
         return FT_prof * meanN / meanG / meanGal
 
     def mean_I(self, zmax):

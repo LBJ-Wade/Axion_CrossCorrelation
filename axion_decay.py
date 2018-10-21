@@ -35,13 +35,13 @@ class Axion_Decay(object):
         haloC = NFW(Mhalo, z)
         cmb_term = 2. / (np.exp(self.m_a / (2.*T0_CMB*(1.+z)*kbolt)) - 1.)
         nu = self.m_a / (4. * np.pi) / hbar / 1e9 # No z dependence! This is at production.
-        synch_term = self.beta_coeff(z) * self.SFR(Mhalo, z)**1.77 / Mhalo**0.77 / (1. + r / (0.015 * haloC.r200))**2.
+        synch_term = self.beta_coeff(z) * (self.SFR(Mhalo, z))**1.77 / Mhalo ** 0.77 / (1. + r / (0.015 * haloC.r200))**2.
         return cmb_term * self.stim_e, synch_term * self.stim_e * self.synch
     
     def beta_coeff(self, z):
         nu =  self.m_a / (4. * np.pi) / hbar / 1e9
-        z_term = 2. * 2e3 * nu**-3.7 * (1.+z)**0.85 * (hubble(z) / H0)**0.57
-        mass_term = Mass_MW ** 0.77 / self.SFR(Mass_MW, 0.)**1.77
+        z_term = 2. * 5e4 * nu**-3.7 * (1.+z)**0.85 * (hubble(z) / H0)**0.57
+        mass_term = Mass_MW**0.77 / (self.SFR(Mass_MW, 0.))**1.77
         return z_term * mass_term * self.stim_e * self.synch
 
     def M_star(self, Mhalo):
@@ -75,10 +75,11 @@ class Axion_Decay(object):
         zdepend =  1. / (10.**(-0.997 * (z - 1.243)) + 10.**(0.241 * (z - 1.243)))
         return zdepend * Mstar
 
-    def mean_g(self, z):
+    def mean_g(self, z, dn_dm_tab=None):
         term0 = Omega_DM * critical_rho(0) # DM density only term
-        dn_dm_tab = self.haloF.dn_dm_tabular(self.Mmin, self.Mmax, z)
-        dn_dm_tab = dn_dm_tab[dn_dm_tab[:,1] > 0]
+        if dn_dm_tab is None:
+            dn_dm_tab = self.haloF.dn_dm_tabular(self.Mmin, self.Mmax, z)
+            dn_dm_tab = dn_dm_tab[dn_dm_tab[:,1] > 0]
         integrand = np.zeros_like(dn_dm_tab[:,0])
         for i in range(len(dn_dm_tab[:,0])):
             integrand[i] = dn_dm_tab[i, 1] * self.SFR(dn_dm_tab[i,0], z)**1.77 / dn_dm_tab[i,0]**0.77 * \
@@ -89,7 +90,7 @@ class Axion_Decay(object):
         
     def diff_mean_g(self, z, M):
         term0 = Omega_DM * critical_rho(0) # DM density only term
-        term1 = self.SFR(M, z)**1.77 / M**0.77 * \
+        term1 = (self.SFR(M, z))**1.77 / M**0.77 * \
                 NFW(M, z).b_field_integral() * self.beta_coeff(z)
         return ((1. + self.gamma_phasespace(1., 1., z)[0]) + term1 / term0)
 
@@ -98,13 +99,13 @@ class Axion_Decay(object):
         dm_prof = NFW(M, z)
         return dm_prof.density(r) * (1. + 2. * np.sum(self.gamma_phasespace(Mhalo, r, z))) / term0
 
-    def FT_gfunc(self, k, z, M):
+    def FT_gfunc(self, k, z, M, dn_dm_tab=None):
         norm = Omega_DM * critical_rho(0) # DM density only term
         DM_p = NFW(M, z)
-        meanG = self.mean_g(z)
+        meanG = self.mean_g(z, dn_dm_tab=dn_dm_tab)
         term0 = DM_p.FT_density(k)
-        term1 = DM_p.FT_density_Bterm(k) * self.beta_coeff(z) * self.SFR(M, z)**1.77 / \
-                M**0.77 * self.stim_e * self.synch
+        term1 = DM_p.FT_density_Bterm(k) * self.beta_coeff(z) * (self.SFR(M, z))**1.77 / M**0.77 * \
+                self.stim_e * self.synch
         FT_prof = (term0 * (1. + self.gamma_phasespace(1., 1., z)[0]) + term1) / norm
         
         return FT_prof / meanG
@@ -124,15 +125,17 @@ class Axion_Decay(object):
             window[i] = self.window(z) * self.mean_g(z)
         return np.trapz(window, z_list)
 
-    def autoPS(self, k, z):
-        dn_dm_tab = self.haloF.dn_dm_tabular(self.Mmin, self.Mmax, z)
-        dn_dm_tab = dn_dm_tab[dn_dm_tab[:,1] > 0]
+    def autoPS(self, k, z, dn_dm_tab=None):
+        if dn_dm_tab is None:
+            print 'Calculating HMF...'
+            dn_dm_tab = self.haloF.dn_dm_tabular(self.Mmin, self.Mmax, z)
+            dn_dm_tab = dn_dm_tab[dn_dm_tab[:,1] > 0]
         integrand_1h = np.zeros_like(dn_dm_tab[:,1])
         integrand_2h = np.zeros_like(dn_dm_tab[:,1], dtype=complex)
         ft = np.zeros_like(dn_dm_tab[:,1], dtype=complex)
         ft2 = np.zeros_like(dn_dm_tab[:,1], dtype=complex)
         for i, dndm in enumerate(dn_dm_tab[:,1]):
-            ft[i] = self.FT_gfunc(k, z, dn_dm_tab[i, 0])
+            ft[i] = self.FT_gfunc(k, z, dn_dm_tab[i, 0], dn_dm_tab=dn_dm_tab)
 #            print ft[i], np.abs(np.real(ft[i]) * dndm)
             integrand_1h[i] = np.real(ft[i] * np.conj(ft[i])) * dndm
             integrand_2h[i] = ft[i] * dndm

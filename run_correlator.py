@@ -1,5 +1,6 @@
 import numpy as np
 from cross_correlate import *
+from multiprocessing import Pool
 
 Mmin = 1e1
 Mmax = 1e16
@@ -44,4 +45,19 @@ for i in range(len(types)):
 
 fname = 'AngularPowerSpectrum_' + tags[0] + tags[1] + '.dat'
 cross = Cross_Corr(windows, avgI, FT, bias, fname, zmax=zmax, Mmin=Mmin, Mmax=Mmax)
-cross.compute_angularPS()
+#cross.compute_angularPS()
+
+ell_list = np.logspace(0., 4, 40)
+process_Num = 10
+
+def anulgarPS(ell_v):
+    soln = cross.comoving_integrate(ell_v)
+    return soln
+
+pool = Pool(processes=process_Num)
+clHold = pool.map(anulgarPS, ell_list)
+pool.close()
+pool.join()
+np.savetxt('outputs/' + cross.fname, clHold)
+
+
