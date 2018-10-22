@@ -50,13 +50,13 @@ cross = Cross_Corr(windows, avgI, FT, bias, fname, zmax=zmax, Mmin=Mmin, Mmax=Mm
 
 ell_list = np.logspace(0., 4, 40)
 process_Num = 10
-
-t_start = time.time()
-print cross.comoving_integrate(1e2)
-t_end = time.time()
-print t_end - t_start
-print cross.comoving_integrate(1e3)
-exit()
+#
+#t_start = time.time()
+#print cross.comoving_integrate(1e2)
+#t_end = time.time()
+#print t_end - t_start
+#print cross.comoving_integrate(1e3)
+#exit()
 
 def anulgarPS(ell_v):
     soln = cross.comoving_integrate(ell_v)
