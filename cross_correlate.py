@@ -22,8 +22,6 @@ class Cross_Corr(object):
         self.chi_list = np.logspace(-1, 5, 30)
         self.haloF = Halo_Functions(Mmin, Mmax, type_HMF='ST')
     
-    
-
     def normalize(self):
         meanI_z1 = self.meanI[0](self.redshifts[-1])
         meanI_z2 = self.meanI[1](self.redshifts[-1])
@@ -60,7 +58,9 @@ class Cross_Corr(object):
             dn_dm_tab = self.haloF.dn_dm_tabular(self.Mmin, self.Mmax, findz)
             dn_dm_tab = dn_dm_tab[dn_dm_tab[:,1] > 0]
             ps = self.power_spectrum(findz, ell, dn_dm_tab)
-            integrand[i] = self.windows[0](findz)*self.windows[1](findz) / chi**2. * np.sum(ps)
+            
+            integrand[i] = self.windows[0](findz, dn_dm_tab)*self.windows[1](findz, dn_dm_tab) \
+                            / chi**2. * np.sum(ps)
 
         cl_val = self.normalize() * np.trapz(integrand, self.chi_list)
         return ell, cl_val

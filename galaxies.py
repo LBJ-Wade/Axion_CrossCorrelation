@@ -35,7 +35,11 @@ class Galaxy_Survey(object):
 
     def window(self, z):
         # Function of redshift
-        return self.dn_dz(z) * hubble(z)
+        return self.dn_dz(z) / (hubble(z) * (1. + z))
+
+    def window_prime(self, z, dn_dm_tab):
+        gval = self.mean_g(z, dn_dm_tab=dn_dm_tab)
+        return self.window(z) * gval
 
     def mean_g(self, z, dn_dm_tab=None):
         if dn_dm_tab is None:

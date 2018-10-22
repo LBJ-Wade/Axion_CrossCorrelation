@@ -1,6 +1,7 @@
 import numpy as np
 from cross_correlate import *
 from multiprocessing import Pool
+import time
 
 Mmin = 1e1
 Mmax = 1e16
@@ -21,7 +22,7 @@ for i in range(len(types)):
         stim_e = 1
         synch = 1
         modules[i] = Axion_Decay(mass, gval, Mmin, Mmax, stim_e=stim_e, synch=synch)
-        windows[i] = modules[i].window
+        windows[i] = modules[i].window_prime
         avgI[i] = modules[i].averageI
         bias[i] = modules[i].bias
         FT[i] = modules[i].FT_gfunc
@@ -33,7 +34,7 @@ for i in range(len(types)):
 
     elif types[i] == 'galaxy':
         modules[i] = Galaxy_Survey(galaxy_survey, Mmin, Mmax)
-        windows[i] = modules[i].window
+        windows[i] = modules[i].window_prime
         avgI[i] = modules[i].averageI
         bias[i] = modules[i].bias
         FT[i] = modules[i].FT_gfunc
@@ -49,6 +50,13 @@ cross = Cross_Corr(windows, avgI, FT, bias, fname, zmax=zmax, Mmin=Mmin, Mmax=Mm
 
 ell_list = np.logspace(0., 4, 40)
 process_Num = 10
+
+t_start = time.time()
+print cross.comoving_integrate(1e2)
+t_end = time.time()
+print t_end - t_start
+print cross.comoving_integrate(1e3)
+exit()
 
 def anulgarPS(ell_v):
     soln = cross.comoving_integrate(ell_v)

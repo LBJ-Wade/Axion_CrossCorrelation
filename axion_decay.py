@@ -30,6 +30,10 @@ class Axion_Decay(object):
         zterm = self.m_a**3 * self.g_a**2. / 1e18 / (hubble(z) * (1. + z))  # eV * Mpc
         units = 1.728e32 # 1 / cm^2 / s
         return  prefactor * zterm  / (6.58e-16) * Omega_DM * critical_rho(0) * units # 1 / cm^2 / s
+    
+    def window_prime(self, z, dn_dm_tab):
+        meang = self.mean_g(z, dn_dm_tab)
+        return self.window(z) * meang
 
     def gamma_phasespace(self, Mhalo, r, z):
         haloC = NFW(Mhalo, z)
